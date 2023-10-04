@@ -3,6 +3,7 @@ from flask_login import LoginManager, login_user, login_required, current_user, 
 from werkzeug.security import generate_password_hash, check_password_hash
 import argparse
 from models import db, User
+from sqlalchemy.exc import IntegrityError
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecochain.db'
@@ -13,7 +14,7 @@ db.init_app(app)
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.query(User).get(int(user_id))
 
 @app.route("/")
 def home():
@@ -29,7 +30,6 @@ def login():
         password = request.form.get("password")
         
         user = User.query.filter_by(Email=email).first()
-        print(user)
 
         if user and check_password_hash(user.Password, password):
             login_user(user)
@@ -65,12 +65,31 @@ def register():
         email = request.form.get("email")
         password = request.form.get("password")
 
+        # Check if the email is already in use
+        existing_user = User.query.filter_by(Email=email).first()
+        if existing_user:
+            return jsonify({
+                "status": "error",
+                "message": "Email is already in use"
+            }), 400
+
         hashed_password = generate_password_hash(password)
         
         new_user = User(Email=email, Password=hashed_password)
         
-        db.session.add(new_user)
-        db.session.commit()
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            return jsonify({
+                "status": "success", 
+                "message": "User registered successfully"
+            }), 201
+        except IntegrityError:
+            db.session.rollback()
+            return jsonify({
+                "status": "error",
+                "message": "An error occurred while registering the user"
+            }), 500
         
         return jsonify({
             "status": "success", 
