@@ -6,7 +6,7 @@ import argparse
 from models import db, User
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecochain.db'
 app.config['SECRET_KEY'] = 'thisisasecretkey'
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -60,6 +60,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.init:
+        print(" * Initializating database tables")
         with app.app_context():
             db.create_all()
 
