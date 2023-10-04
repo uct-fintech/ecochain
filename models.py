@@ -6,7 +6,6 @@ db = SQLAlchemy()
 class User(db.Model, UserMixin):
     UserID = db.Column(db.Integer, primary_key=True)
     Email = db.Column(db.String(100), nullable=False, unique=True)
-    Username = db.Column(db.String(20), nullable=False, unique=True)
     Password = db.Column(db.String(80), nullable=False)
     CompanyID = db.Column(db.Integer, db.ForeignKey('company.CompanyID'))
 

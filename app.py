@@ -1,5 +1,5 @@
 from flask import Flask, request, redirect, url_for, flash, jsonify
-from flask_login import LoginManager, login_user
+from flask_login import LoginManager, login_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import argparse
 from models import db, User
@@ -17,42 +17,71 @@ def load_user(user_id):
 
 @app.route("/")
 def home():
-    return "Home"
+    return jsonify({
+        "status": "success", 
+        "message": "Welcome to EcoChain"
+        }), 200
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form.get("username")
+        email = request.form.get("email")
         password = request.form.get("password")
         
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter_by(email=email).first()
         
         if user and check_password_hash(user.password, password):
             login_user(user)
-            return jsonify({"status": "success", "message": "Logged in successfully"}), 200
+            return jsonify({
+                "status": "success", 
+                "message": "Logged in successfully"
+                }), 200
         
-        return jsonify({"status": "error", "message": "Invalid username or password"}), 401
+        return jsonify({
+            "status": "error", 
+            "message": "Invalid email or password"
+            }), 401
     
-    return jsonify({"status": "info", "message": "GET request for login"}), 200
+    return jsonify({
+        "status": "info", 
+        "message": "GET request for login"
+        }), 200
 
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
+
         email = request.form.get("email")
-        
+        password = request.form.get("password")
+
         hashed_password = generate_password_hash(password)
         
-        new_user = User(username=username, password=hashed_password, email=email)
+        new_user = User(email=email, password=hashed_password)
         
         db.session.add(new_user)
         db.session.commit()
         
-        return jsonify({"status": "success", "message": "User registered successfully"}), 201
+        return jsonify({
+            "status": "success", 
+            "message": "User registered successfully"
+            }), 201
     
-    return jsonify({"status": "info", "message": "GET request for register"}), 200
+    return jsonify({
+        "status": "info", 
+        "message": "GET request for register"
+        }), 200
+
+# Use this protected decorator for all sensitive information
+@app.route('/protected')
+@login_required
+def protected_route():
+    return jsonify({
+        "status": "success", 
+        "message": "Welcome to the protected route!",
+        "user_id": current_user.id
+    }), 200
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Manage the Flask app.")
