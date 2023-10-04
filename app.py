@@ -2,23 +2,15 @@ from flask import Flask, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, LoginManager, login_user
 from werkzeug.security import generate_password_hash, check_password_hash
-
-
-CREATE_TABLES = False
+import argparse
+from models import db, User
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SECRET_KEY'] = 'thisisasecretkey'
-db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
-
-
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key = True)
-    username = db.Column(db.String(20), nullable = False, unique = True)
-    password = db.Column(db.String(80), nullable = False)
-    email = db.Column(db.String(100), nullable=False, unique=True)
+db.init_app(app)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -63,7 +55,12 @@ def register():
     return "Register"
 
 if __name__ == "__main__":
-    if CREATE_TABLES:
+    parser = argparse.ArgumentParser(description="Manage the Flask app.")
+    parser.add_argument('--init', action='store_true', help='Initialize the database tables.')
+    args = parser.parse_args()
+
+    if args.init:
         with app.app_context():
-            db.create_all()  # This line creates the initial database tables
+            db.create_all()
+
     app.run(debug=True)
