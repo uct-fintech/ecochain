@@ -1,6 +1,5 @@
-from flask import Flask, request, redirect, url_for, flash
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin, LoginManager, login_user
+from flask import Flask, request, redirect, url_for, flash, jsonify
+from flask_login import LoginManager, login_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import argparse
 from models import db, User
@@ -30,11 +29,12 @@ def login():
         
         if user and check_password_hash(user.password, password):
             login_user(user)
-            return redirect(url_for("home"))
+            return jsonify({"status": "success", "message": "Logged in successfully"}), 200
         
-        flash("Invalid username or password")
+        return jsonify({"status": "error", "message": "Invalid username or password"}), 401
     
-    return "Login"
+    return jsonify({"status": "info", "message": "GET request for login"}), 200
+
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -50,9 +50,9 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         
-        return redirect(url_for("login"))
+        return jsonify({"status": "success", "message": "User registered successfully"}), 201
     
-    return "Register"
+    return jsonify({"status": "info", "message": "GET request for register"}), 200
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Manage the Flask app.")
