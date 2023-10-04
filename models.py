@@ -9,6 +9,9 @@ class User(db.Model, UserMixin):
     Password = db.Column(db.String(80), nullable=False)
     CompanyID = db.Column(db.Integer, db.ForeignKey('company.CompanyID'))
 
+    def get_id(self):
+        return str(self.UserID)
+
 class Company(db.Model):
     CompanyID = db.Column(db.Integer, primary_key=True)
     Name = db.Column(db.String(100), nullable=False)

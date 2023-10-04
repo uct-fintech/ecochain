@@ -1,5 +1,5 @@
 from flask import Flask, request, redirect, url_for, flash, jsonify
-from flask_login import LoginManager, login_user, login_required, current_user
+from flask_login import LoginManager, login_user, login_required, current_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import argparse
 from models import db, User
@@ -28,9 +28,10 @@ def login():
         email = request.form.get("email")
         password = request.form.get("password")
         
-        user = User.query.filter_by(email=email).first()
-        
-        if user and check_password_hash(user.password, password):
+        user = User.query.filter_by(Email=email).first()
+        print(user)
+
+        if user and check_password_hash(user.Password, password):
             login_user(user)
             return jsonify({
                 "status": "success", 
@@ -47,6 +48,15 @@ def login():
         "message": "GET request for login"
         }), 200
 
+@app.route("/logout", methods=["POST"])
+def logout():
+    # Log out the current user
+    logout_user()
+    
+    return jsonify({
+        "status": "success", 
+        "message": "Logged out successfully"
+    }), 200
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -57,7 +67,7 @@ def register():
 
         hashed_password = generate_password_hash(password)
         
-        new_user = User(email=email, password=hashed_password)
+        new_user = User(Email=email, Password=hashed_password)
         
         db.session.add(new_user)
         db.session.commit()
@@ -78,8 +88,9 @@ def register():
 def protected_route():
     return jsonify({
         "status": "success", 
-        "message": "Welcome to the protected route!",
-        "user_id": current_user.id
+        "message": "You've successfully accessed a protected route",
+        "id": current_user.UserID,
+        "email" : current_user.Email
     }), 200
 
 
