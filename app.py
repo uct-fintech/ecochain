@@ -80,9 +80,10 @@ def register():
         try:
             db.session.add(new_user)
             db.session.commit()
+            login_user(new_user)
             return jsonify({
                 "status": "success", 
-                "message": "User registered successfully"
+                "message": "User registered and logged in successfully"
             }), 201
         except IntegrityError:
             db.session.rollback()
