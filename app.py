@@ -91,12 +91,7 @@ def register():
                 "status": "error",
                 "message": "An error occurred while registering the user"
             }), 500
-        
-        return jsonify({
-            "status": "success", 
-            "message": "User registered successfully"
-            }), 201
-    
+            
     return jsonify({
         "status": "info", 
         "message": "GET request for register"
@@ -113,6 +108,21 @@ def protected_route():
         "email" : current_user.Email
     }), 200
 
+
+@app.route('/get_reports')
+@login_required
+def get_reports():
+    if request.method == "GET":
+        #return json object with report data for current_user.companyID
+        return jsonify({
+            "status": "success", 
+            "message": "You've successfully accessed report data",
+            "id": current_user.CompanyID
+        }), 200
+
+# generate_report_id()
+# firstname, lastname, email to receive report
+# Creates new report record  
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Manage the Flask app.")
