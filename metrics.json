@@ -1,0 +1,12 @@
+{
+    "people_metric": [
+        "met1a",
+        "met2a",
+        "met3a"
+    ],
+    "environment_metric": [
+        "met1b",
+        "met2b",
+        "met3b"
+    ]
+}
