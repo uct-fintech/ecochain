@@ -12,10 +12,9 @@ from algosdk.transaction import PaymentTxn
 from utils import algod_details
 from manage_account import get_user_account
 
-userID = "user123"
 
 
-def first_transaction_example(private_key, my_address, rec_address):
+def first_transaction_example(private_key, my_address, rec_address, metric_metadata):
     algod_address, algod_token, headers = algod_details()
 
     algod_client = algod.AlgodClient(algod_token, algod_address, headers)
@@ -31,18 +30,12 @@ def first_transaction_example(private_key, my_address, rec_address):
     #params.fee = 1000
     receiver = rec_address
 
-    # Read and parse the JSON file
-    with open("metrics.json", "r") as file:
-        metrics_data = json.load(file)
-        # Assuming you want to encode 'people_metric' for this example
-        metric_metadata = metrics_data
-        # Convert the list to string and then encode
-        all_data = []
-        for key, values in metric_metadata.items():
-            for value in values:
-                all_data.append(f"{key}: {value}")
+
+    all_data = []
+    for key, value in metric_metadata.items():
+        all_data.append(f"{key}: {value}")
         # Convert the list to a single string and then encode
-        note = ', '.join(all_data).encode()
+    note = ', '.join(all_data).encode()
 
     unsigned_txn = PaymentTxn(my_address, params, receiver, 0, None, note)
 
@@ -58,14 +51,11 @@ def first_transaction_example(private_key, my_address, rec_address):
         confirmed_txn = transaction.wait_for_confirmation(algod_client, txid, 4)
     except Exception as err:
         print(err)
-        return
-
+        return txid
+    
     print(f"Transaction information: {json.dumps(confirmed_txn, indent=4)}")
     print(f"Decoded note: {b64decode(confirmed_txn['txn']['txn']['note'])}")
+    
+    return txid
 
 
-private_key = "4pGX12svaEoBYqBX7WfriGIhUB3VjkeUofm6IM3Y+6b69JOah+47V6+PX/KeLfpDMv683zGwQ2R83pkdj7FwCA=="
-my_address = "7L2JHGUH5Y5VPL4PL7ZJ4LP2IMZP5PG7GGYEGZD432MR3D5ROAEDKWFGRU"
-rec_address = get_user_account(userID)['address']
-
-first_transaction_example(private_key, my_address, rec_address)
