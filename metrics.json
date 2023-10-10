@@ -1,12 +1,1 @@
-{
-    "people_metric": [
-        "met1a",
-        "met2a",
-        "met3a"
-    ],
-    "environment_metric": [
-        "met1b",
-        "met2b",
-        "met3b"
-    ]
-}
+{"PeopleMetricsID": 3, "DiversityAndInclusion": 60.0, "PayEquality": 5.0, "WageLevel": 30.0, "HealthAndSafetyLevel": 40.0, "PlanetMetricsID": 4, "GreenhouseGasEmission": 20.0, "WaterConsumption": 2.0, "LandUse": 30.0, "ProsperityMetricsID": 3, "TotalTaxPaid": 1.0, "AbsNumberOfNewEmps": 1.0, "AbsNumberOfNewEmpTurnover": 1.0, "EconomicContribution": 1.0, "TotalRNDExpenses": 1.0, "TotalCapitalExpenditures": 20.0, "ShareBuyBacksAndDividendPayments": 30.0, "GovernanceMetricsID": 3, "AntiCorruptionTraining": 20.0, "ConfirmedCorruptionIncidentPrev": 2.0, "ConfirmedCorruptionIncidentCurrent": 40.0}
