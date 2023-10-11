@@ -16,6 +16,8 @@ from algosdk import transaction
 from algosdk.transaction import PaymentTxn
 from utils import algod_details
 from manage_account import get_user_account
+from flask_cors import CORS
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecochain.db'
@@ -23,6 +25,7 @@ app.config['SECRET_KEY'] = 'thisisasecretkey'
 login_manager = LoginManager()
 login_manager.init_app(app)
 db.init_app(app)
+CORS(app)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -452,5 +455,4 @@ if __name__ == "__main__":
         print(" * Initializating database tables")
         with app.app_context():
             db.create_all()
-
     app.run(debug=True)
