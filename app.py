@@ -397,8 +397,17 @@ def trans():
     my_address = "7L2JHGUH5Y5VPL4PL7ZJ4LP2IMZP5PG7GGYEGZD432MR3D5ROAEDKWFGRU"
     rec_address = current_user.AlgorandAddress
 
-    AlgoTransaction = first_transaction_example(private_key, my_address, rec_address, data)
+    txid, confirmedTxn = first_transaction_example(private_key, my_address, rec_address, data)
 
+    # Check if confirmed_txn has the expected structure or keys
+    if not confirmedTxn:
+        return jsonify({
+            "status": "error",
+            "message": "Failed to confirm the transaction"
+        }), 500
+
+    AlgoTransaction = txid
+    
     new_metric = Transaction(
             TransactionID=AlgoTransaction,
             SubmissionID=submission_id
