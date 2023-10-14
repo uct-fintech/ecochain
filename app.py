@@ -1,4 +1,6 @@
 from flask import Flask, request, redirect, url_for, flash, jsonify, session, send_from_directory
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
+from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import argparse
 from models import db, User, Transaction, Submission, Peoplemetrics, Planetmetrics, Prosperitymetrics, Governancemetrics
@@ -14,21 +16,18 @@ from algosdk import transaction
 from algosdk.transaction import PaymentTxn
 from utils import algod_details
 from manage_account import get_user_account
-from flask_cors import CORS
 from faker import Faker
 import random
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecochain.db'
 app.config['SECRET_KEY'] = 'thisisasecretkey'
-db.init_app(app)
-CORS(app, origins=["http://localhost:8080"], supports_credentials=True)
-fake = Faker()
+app.config['JWT_SECRET_KEY'] = 'super-secret'  # Change this in production
+jwt = JWTManager(app)
 
-app.config.update(
-    SESSION_COOKIE_SECURE=True,
-    SESSION_COOKIE_SAMESITE='None'
-)
+db.init_app(app)
+CORS(app)
+fake = Faker()
 
 @app.route("/")
 def home():
@@ -40,17 +39,16 @@ def home():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        data = request.get_json()
-        email = data.get('email')
-        password = data.get('password')
+        email = request.json.get('email')
+        password = request.json.get('password')
+
+        print(f"email: {email}, password: {password}")
         
         user = User.query.filter_by(Email=email).first()
 
         if user and check_password_hash(user.Password, password):
-            return jsonify({
-                "success": True,
-                "message": "Logged in successfully"
-                }), 200
+            access_token = create_access_token(identity=user.UserID)
+            return jsonify(access_token=access_token), 200
         
         return jsonify({
             "success": False, 
@@ -76,10 +74,9 @@ def logout():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        data = request.get_json()
-        email = data.get("email")
-        password = data.get("password")
-        name = data.get("name")
+        email = request.json.get("email")
+        password = request.json.get("password")
+        name = request.json.get("name")
 
         # Check if the email is already in use
         existing_user = User.query.filter_by(Email=email).first()
@@ -119,6 +116,7 @@ def register():
         }), 200
 
 @app.route("/start_submission", methods=["POST"])
+@jwt_required()
 def start_submission():
     if request.method == "POST":
         data = request.get_json()
@@ -134,7 +132,8 @@ def start_submission():
         
         if not submission_id:
             # If not, create a new Submission record
-            new_submission = Submission(UserID=current_user.UserID, FirstName=first_name, LastName=last_name)
+            current_user_id = get_jwt_identity()
+            new_submission = Submission(UserID=current_user_id, FirstName=first_name, LastName=last_name)
             db.session.add(new_submission)
             db.session.commit()
             submission_id = new_submission.SubmissionID
@@ -154,8 +153,8 @@ def start_submission():
             "message": "GET request for start_submission"
         }), 200
 
-
 @app.route("/input_peoplemetrics", methods=["POST"])
+@jwt_required()
 def input_peoplemetrics():
         # Retrieve the submission_id from the session
     submission_id = session.get('submission_id')
@@ -203,6 +202,7 @@ def input_peoplemetrics():
         }), 500
 
 @app.route("/input_planetmetrics", methods=["POST"])
+@jwt_required()
 def input_planetmetrics():
 
     # Retrieve the submission_id from the session
@@ -247,8 +247,8 @@ def input_planetmetrics():
             "message": str(e)
         }), 500
 
-
 @app.route("/input_prosperitymetrics", methods=["POST"])
+@jwt_required()
 def input_prosperitymetrics():
 
     # Retrieve the submission_id from the session
@@ -308,8 +308,8 @@ def input_prosperitymetrics():
             "message": str(e)
         }), 500
 
-
 @app.route("/input_governancemetrics", methods=["POST"])
+@jwt_required()
 def input_governancemetrics():
 
     # Retrieve the submission_id from the session
@@ -355,8 +355,8 @@ def input_governancemetrics():
             "message": str(e)
         }), 500
 
-
 @app.route('/trans', methods=['GET'])
+@jwt_required()
 def trans():
 
     submission_id = session.get('submission_id')
@@ -384,6 +384,8 @@ def trans():
 
     private_key = "4pGX12svaEoBYqBX7WfriGIhUB3VjkeUofm6IM3Y+6b69JOah+47V6+PX/KeLfpDMv683zGwQ2R83pkdj7FwCA=="
     my_address = "7L2JHGUH5Y5VPL4PL7ZJ4LP2IMZP5PG7GGYEGZD432MR3D5ROAEDKWFGRU"
+    current_user_id = get_jwt_identity()
+    current_user = session.User()
     rec_address = current_user.AlgorandAddress
 
     txid, confirmedTxn = first_transaction_example(private_key, my_address, rec_address, data)
@@ -417,10 +419,12 @@ def trans():
         }), 500
 
 
-
 # Use this protected decorator for all sensitive information
 @app.route('/protected')
+@jwt_required()
 def protected_route():
+    user_id = get_jwt_identity()
+    current_user = db.session.get(User, user_id)
     return jsonify({
         "success": True,  
         "message": "You've successfully accessed a protected route",
@@ -428,21 +432,26 @@ def protected_route():
         "email" : current_user.Email
     }), 200
 
-
 @app.route('/get_reports')
+@jwt_required()
 def get_reports():
     if request.method == "GET":
         #return json object with report data for current_user.companyID
+        user_id = get_jwt_identity()
+        current_user = db.session.get(User, user_id)
         return jsonify({
             "success": True,  
             "message": "You've successfully accessed report data",
             "id": current_user.CompanyID
         }), 200
-    
+
 @app.route('/get_dashboard')
+@jwt_required()    
 def get_dashboard_data():
     if request.method == "GET":
-        subs = Submission.query.filter_by(UserID = current_user.UserID).all()
+        user_id = get_jwt_identity()
+        current_user = db.session.get(User, user_id)
+        subs = Submission.query.filter_by(UserID = user_id).all()
 
         serialized_subs = [sub.as_dict() for sub in subs]
 
@@ -532,4 +541,4 @@ if __name__ == "__main__":
             db.create_all()
             generate_dummy_data()
     else:
-        app.run(ssl_context='adhoc', debug=True)
+        app.run(debug=True)
