@@ -56,3 +56,5 @@ def first_transaction_example(private_key, my_address, rec_address, metric_metad
     print(f"Decoded note: {b64decode(confirmed_txn['txn']['txn']['note'])}")
     
     return txid, confirmed_txn
+
+

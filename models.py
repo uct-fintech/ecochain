@@ -65,9 +65,8 @@ class Governancemetrics(db.Model):
 
 class Transaction(db.Model):
     TransactionID = db.Column(db.String(100), primary_key=True)
-    NFTTransactionMintID = db.Column(db.String(100))
-    NFTTransactionTransferID = db.Column(db.String(100))
-    NFTAssetID = db.Column(db.String(100))
+    ReportID = db.Column(db.Integer, db.ForeignKey('report.ReportID'))
+    NFTTransactionID = db.Column(db.String(100))
     SubmissionID = db.Column(db.Integer, db.ForeignKey('submission.SubmissionID'))
 
 class Report(db.Model):
