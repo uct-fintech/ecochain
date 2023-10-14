@@ -2,8 +2,7 @@ from flask import Flask, request, redirect, url_for, flash, jsonify, session, se
 from flask_login import LoginManager, login_user, login_required, current_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import argparse
-from models import db, User
-from models import Transaction, Submission, Peoplemetrics, Planetmetrics, Prosperitymetrics, Governancemetrics
+from models import db, User, Transaction, Submission, Peoplemetrics, Planetmetrics, Prosperitymetrics, Governancemetrics
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.inspection import inspect
 from algosdk import account
@@ -17,7 +16,7 @@ from algosdk.transaction import PaymentTxn
 from utils import algod_details
 from manage_account import get_user_account
 from flask_cors import CORS
-
+from faker import Faker
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecochain.db'
@@ -26,6 +25,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 db.init_app(app)
 CORS(app)
+fake = Faker()
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -442,16 +442,97 @@ def get_reports():
             "message": "You've successfully accessed report data",
             "id": current_user.CompanyID
         }), 200
+    
+@app.route('/get_user')
+@login_required
+def get_dashboard_data():
+    return jsonify({
+        "success": True,
+        "id": current_user.UserID,
+        "email" : current_user.Email,
+        "name": current_user.Name,
+        "algo_add" : current_user.AlgorandAddress
+    }), 200
 
-# generate_report_id()
-# firstname, lastname, email to receive report
-# Creates new report record  
+def generate_dummy_data():
+    with app.app_context():
+        # Add dummy users
+        users = User.query.all()
+
+        # Commit users to get their IDs
+        db.session.commit()
+
+        # Add dummy submissions
+        submissions = []
+        for user in users:
+            sub = Submission(
+                FirstName=fake.first_name(),
+                LastName=fake.last_name(),
+                Date=fake.date_this_decade(),
+                UserID=user.UserID
+            )
+            db.session.add(sub)
+            sub2 = Submission(
+                FirstName=fake.first_name(),
+                LastName=fake.last_name(),
+                Date=fake.date_this_decade(),
+                UserID=user.UserID
+            )
+            db.session.add(sub2)
+            submissions.append(sub)
+
+        db.session.commit()
+
+        # Add dummy metrics
+        for sub in submissions:
+            db.session.add(Peoplemetrics(
+                DiversityAndInclusion=fake.random_number(digits=2),
+                PayEquality=fake.random_number(digits=2),
+                WageLevel=fake.random_number(digits=2),
+                HealthAndSafetyLevel=fake.random_number(digits=2),
+                SubmissionID=sub.SubmissionID
+            ))
+
+            db.session.add(Planetmetrics(
+                GreenhouseGasEmission=fake.random_number(digits=2),
+                WaterConsumption=fake.random_number(digits=2),
+                LandUse=fake.random_number(digits=2),
+                SubmissionID=sub.SubmissionID
+            ))
+            
+            db.session.add(Prosperitymetrics(
+                TotalTaxPaid=fake.random_number(digits=2),
+                AbsNumberOfNewEmps=fake.random_number(digits=2),
+                AbsNumberOfNewEmpTurnover=fake.random_number(digits=2),
+                EconomicContribution=fake.random_number(digits=2),
+                TotalRNDExpenses=fake.random_number(digits=2),
+                TotalCapitalExpenditures=fake.random_number(digits=2),
+                ShareBuyBacksAndDividendPayments=fake.random_number(digits=2),
+                SubmissionID=sub.SubmissionID
+            ))
+            
+            db.session.add(Governancemetrics(
+                AntiCorruptionTraining=fake.random_number(digits=2),
+                ConfirmedCorruptionIncidentPrev=fake.random_number(digits=2),
+                ConfirmedCorruptionIncidentCurrent=fake.random_number(digits=2),
+                SubmissionID=sub.SubmissionID
+            ))
+            
+            db.session.add(Transaction(
+                TransactionID=fake.sha256(),
+                NFTTransactionID=fake.sha256(),
+                SubmissionID=sub.SubmissionID
+            ))
+
+        db.session.commit()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Manage the Flask app.")
     parser.add_argument('--init', action='store_true', help='Initialize the database tables.')
     args = parser.parse_args()
 
+    # generate_dummy_data()
+    
     if args.init:
         print(" * Initializating database tables")
         with app.app_context():
