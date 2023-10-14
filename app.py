@@ -128,8 +128,9 @@ def register():
 @login_required
 def start_submission():
     if request.method == "POST":
-        first_name = request.form.get("FirstName")
-        last_name = request.form.get("LastName")
+        data = request.get_json()
+        first_name = data.get("FirstName")
+        last_name = data.get("LastName")
         
         # Store these names in the current session for further use
         session['first_name'] = first_name
@@ -148,7 +149,7 @@ def start_submission():
         
         # Return a success message along with the submission ID.
         return jsonify({
-            "status": "success", 
+            "success": True, 
             "message": "Submission started successfully",
             "submission_id": submission_id
         }), 200
@@ -170,14 +171,14 @@ def input_peoplemetrics():
     # Check if submission_id exists in the session
     if not submission_id:
         return jsonify({
-            "status": "error", 
+            "success": False, 
             "message": "No active submission session found. Start a new submission first."
         }), 400
-    
-    diversity_inclusion = request.form.get("DiversityAndInclusion")
-    pay_equality = request.form.get("PayEquality")
-    wage_level = request.form.get("WageLevel")
-    health_safety_level = request.form.get("HealthAndSafetyLevel")
+    data = request.get_json()
+    diversity_inclusion = data.get("DiversityAndInclusion")
+    pay_equality = data.get("PayEquality")
+    wage_level = data.get("WageLevel")
+    health_safety_level = data.get("HealthAndSafetyLevel")
     
     existing_metric = Peoplemetrics.query.filter_by(SubmissionID=submission_id).first()
     
@@ -199,13 +200,13 @@ def input_peoplemetrics():
     try:
         db.session.commit()
         return jsonify({
-            "status": "success", 
+            "success": True, 
             "message": "Metrics added successfully"
         }), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({
-            "status": "error",
+            "success": False,
             "message": str(e)
         }), 500
 
@@ -219,13 +220,13 @@ def input_planetmetrics():
     # Check if submission_id exists in the session
     if not submission_id:
         return jsonify({
-            "status": "error", 
+            "success": False, 
             "message": "No active submission session found. Start a new submission first."
         }), 400
-    
-    greenhouse_gas_emission = request.form.get("GreenhouseGasEmission")
-    water_consumption = request.form.get("WaterConsumption")
-    land_use = request.form.get("LandUse")
+    data = request.get_json()
+    greenhouse_gas_emission = data.get("GreenhouseGasEmission")
+    water_consumption = data.get("WaterConsumption")
+    land_use = data.get("LandUse")
 
     existing_metric = Planetmetrics.query.filter_by(SubmissionID=submission_id).first()
 
@@ -245,13 +246,13 @@ def input_planetmetrics():
     try:
         db.session.commit()
         return jsonify({
-            "status": "success", 
+            "success": True, 
             "message": "Planet metrics added successfully"
         }), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({
-            "status": "error",
+            "success": False,
             "message": str(e)
         }), 500
 
@@ -266,17 +267,17 @@ def input_prosperitymetrics():
     # Check if submission_id exists in the session
     if not submission_id:
         return jsonify({
-            "status": "error", 
+            "success": False, 
             "message": "No active submission session found. Start a new submission first."
         }), 400
-    
-    total_tax_paid = request.form.get("TotalTaxPaid")
-    abs_number_of_new_emps = request.form.get("AbsNumberOfNewEmps")
-    abs_number_of_new_emp_turnover = request.form.get("AbsNumberOfNewEmpTurnover")
-    economic_contribution = request.form.get("EconomicContribution")
-    total_rnd_expenses = request.form.get("TotalRNDExpenses")
-    total_capital_expenditures = request.form.get("TotalCapitalExpenditures")
-    share_buybacks_and_dividend_payments = request.form.get("ShareBuyBacksAndDividendPayments")
+    data = request.get_json()
+    total_tax_paid = data.get("TotalTaxPaid")
+    abs_number_of_new_emps = data.get("AbsNumberOfNewEmps")
+    abs_number_of_new_emp_turnover = data.get("AbsNumberOfNewEmpTurnover")
+    economic_contribution = data.get("EconomicContribution")
+    total_rnd_expenses = data.get("TotalRNDExpenses")
+    total_capital_expenditures = data.get("TotalCapitalExpenditures")
+    share_buybacks_and_dividend_payments = data.get("ShareBuyBacksAndDividendPayments")
 
     # Check if an entry with the submission_id already exists
     existing_metric = Prosperitymetrics.query.filter_by(SubmissionID=submission_id).first()
@@ -307,13 +308,13 @@ def input_prosperitymetrics():
     try:
         db.session.commit()
         return jsonify({
-            "status": "success", 
+            "success": True, 
             "message": "Prosperity metrics added successfully"
         }), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({
-            "status": "error",
+            "success": False,
             "message": str(e)
         }), 500
 
@@ -328,13 +329,13 @@ def input_governancemetrics():
     # Check if submission_id exists in the session
     if not submission_id:
         return jsonify({
-            "status": "error", 
+            "success": False, 
             "message": "No active submission session found. Start a new submission first."
         }), 400
-    
-    anti_corruption_training = request.form.get("AntiCorruptionTraining")
-    confirmed_corruption_incident_prev = request.form.get("ConfirmedCorruptionIncidentPrev")
-    confirmed_corruption_incident_current = request.form.get("ConfirmedCorruptionIncidentCurrent")
+    data = request.get_json()
+    anti_corruption_training = data.get("AntiCorruptionTraining")
+    confirmed_corruption_incident_prev = data.get("ConfirmedCorruptionIncidentPrev")
+    confirmed_corruption_incident_current = data.get("ConfirmedCorruptionIncidentCurrent")
 
     existing_metric = Governancemetrics.query.filter_by(SubmissionID=submission_id).first()
 
@@ -355,13 +356,13 @@ def input_governancemetrics():
     try:
         db.session.commit()
         return jsonify({
-            "status": "success", 
+            "success": True, 
             "message": "Governance metrics added successfully"
         }), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({
-            "status": "error",
+            "success": False,
             "message": str(e)
         }), 500
 
@@ -374,7 +375,7 @@ def trans():
     
     if not submission_id:
         return jsonify({
-            "status": "error", 
+            "success": False, 
             "message": "No active submission session found. Start a new submission first."
         }), 400
 
@@ -397,8 +398,17 @@ def trans():
     my_address = "7L2JHGUH5Y5VPL4PL7ZJ4LP2IMZP5PG7GGYEGZD432MR3D5ROAEDKWFGRU"
     rec_address = current_user.AlgorandAddress
 
-    AlgoTransaction = first_transaction_example(private_key, my_address, rec_address, data)
+    txid, confirmedTxn = first_transaction_example(private_key, my_address, rec_address, data)
 
+    # Check if confirmed_txn has the expected structure or keys
+    if not confirmedTxn:
+        return jsonify({
+            "success": False,
+            "message": "Failed to confirm the transaction"
+        }), 500
+
+    AlgoTransaction = txid
+    
     new_metric = Transaction(
             TransactionID=AlgoTransaction,
             SubmissionID=submission_id
@@ -408,13 +418,13 @@ def trans():
         db.session.add(new_metric)
         db.session.commit()
         return jsonify({
-            "status": "success", 
+            "success": True,  
             "message": "Transaction recorded successfully"
         }), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({
-            "status": "error",
+            "success": False, 
             "message": str(e)
         }), 500
 
@@ -425,7 +435,7 @@ def trans():
 @login_required
 def protected_route():
     return jsonify({
-        "status": "success", 
+        "success": True,  
         "message": "You've successfully accessed a protected route",
         "id": current_user.UserID,
         "email" : current_user.Email
@@ -438,7 +448,7 @@ def get_reports():
     if request.method == "GET":
         #return json object with report data for current_user.companyID
         return jsonify({
-            "status": "success", 
+            "success": True,  
             "message": "You've successfully accessed report data",
             "id": current_user.CompanyID
         }), 200
