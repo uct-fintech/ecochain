@@ -9,13 +9,13 @@ from sqlalchemy.inspection import inspect
 from algosdk import account
 import json
 from algotransaction import first_transaction_example
+from asa_creation import mintnft
 from algosdk.v2client import algod
 import json
 from base64 import b64decode
 from algosdk import transaction
 from algosdk.transaction import PaymentTxn
 from utils import algod_details
-from manage_account import get_user_account
 from flask_cors import CORS
 
 
@@ -406,11 +406,26 @@ def trans():
             "success": False,
             "message": "Failed to confirm the transaction"
         }), 500
+    
+    txidNFT, confirmed_txnNFT, created_asset = mintnft(private_key, my_address, txid)
+
+    print(f"Result confirmed in round: {confirmed_txnNFT['confirmed-round']}")
+
+    if not confirmed_txnNFT:
+        return jsonify({
+        "success": False,
+        "message": "Failed to confirm the transaction"
+    }), 500
+
 
     AlgoTransaction = txid
+    NFTTransactionMint = txidNFT
+    NFTAsset = created_asset
     
     new_metric = Transaction(
             TransactionID=AlgoTransaction,
+            NFTTransactionMintID=NFTTransactionMint,
+            NFTAssetID=NFTAsset,
             SubmissionID=submission_id
     )
 
@@ -421,13 +436,14 @@ def trans():
             "success": True,  
             "message": "Transaction recorded successfully"
         }), 201
+    
+    
     except Exception as e:
         db.session.rollback()
         return jsonify({
             "success": False, 
             "message": str(e)
         }), 500
-
 
 
 # Use this protected decorator for all sensitive information

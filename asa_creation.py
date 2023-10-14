@@ -11,10 +11,9 @@ from algosdk import transaction
 from algosdk.transaction import PaymentTxn
 from utils import algod_details
 
-
-
-def first_transaction_example(private_key, my_address, rec_address, metric_metadata):
+def mintnft(private_key, my_address, transID1):
     algod_address, algod_token, headers = algod_details()
+
 
     algod_client = algod.AlgodClient(algod_token, algod_address, headers)
 
@@ -27,32 +26,36 @@ def first_transaction_example(private_key, my_address, rec_address, metric_metad
     # comment out next two lines to use suggested fees
     #params.flat_fee = True
     #params.fee = 1000
-    receiver = rec_address
-
-
-    all_data = []
-    for key, value in metric_metadata.items():
-        all_data.append(f"{key}: {value}")
-        # Convert the list to a single string and then encode
-    note = ', '.join(all_data).encode()
-
-    unsigned_txn = PaymentTxn(my_address, params, receiver, 0, None, note)
-
-    # sign transaction
-    signed_txn = unsigned_txn.sign(private_key)
-
-    # submit the transaction and get back a transaction id
+    txn = transaction.AssetConfigTxn(
+    sender=my_address,
+    sp=params,
+    default_frozen=False,
+    unit_name="rug",
+    asset_name="Really Useful Gift",
+    manager=my_address,
+    reserve=None,
+    freeze=None,
+    clawback=None,
+    url="https://testnet.algoexplorer.io/tx/" + transID1,
+    strict_empty_address_check=False,
+    total=1,
+    decimals=0,
+    )
+    
+        # Sign with secret key of creator
+    signed_txn = txn.sign(private_key)
+    # Send the transaction to the network and retrieve the txid.
     txid = algod_client.send_transaction(signed_txn)
-    print("Successfully submitted transaction with txID: {}".format(txid))
+    print(f"Sent asset create transaction with txid: {txid}")
 
-    # wait for confirmation
     try:
         confirmed_txn = transaction.wait_for_confirmation(algod_client, txid, 4)
     except Exception as err:
         print(err)
-        return txid
-    
-    print(f"Transaction information: {json.dumps(confirmed_txn, indent=4)}")
-    print(f"Decoded note: {b64decode(confirmed_txn['txn']['txn']['note'])}")
-    
-    return txid, confirmed_txn
+        return 
+
+    # grab the asset id for the asset we just created
+    created_asset = confirmed_txn["asset-index"]
+    print(f"Asset ID created: {created_asset}")
+
+    return txid, confirmed_txn, created_asset
