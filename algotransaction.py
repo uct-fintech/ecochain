@@ -10,7 +10,6 @@ from base64 import b64decode
 from algosdk import transaction
 from algosdk.transaction import PaymentTxn
 from utils import algod_details
-from manage_account import get_user_account
 
 
 
@@ -56,6 +55,6 @@ def first_transaction_example(private_key, my_address, rec_address, metric_metad
     print(f"Transaction information: {json.dumps(confirmed_txn, indent=4)}")
     print(f"Decoded note: {b64decode(confirmed_txn['txn']['txn']['note'])}")
     
-    return txid
+    return txid, confirmed_txn
 
 
