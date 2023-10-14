@@ -42,20 +42,21 @@ def home():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form.get("email")
-        password = request.form.get("password")
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
         
         user = User.query.filter_by(Email=email).first()
 
         if user and check_password_hash(user.Password, password):
             login_user(user)
             return jsonify({
-                "status": "success", 
+                "success": True,
                 "message": "Logged in successfully"
                 }), 200
         
         return jsonify({
-            "status": "error", 
+            "success": False, 
             "message": "Invalid email or password"
             }), 401
     
@@ -80,16 +81,16 @@ def logout():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-
-        email = request.form.get("email")
-        password = request.form.get("password")
-        name = request.form.get("name")
+        data = request.get_json()
+        email = data.get("email")
+        password = data.get("password")
+        name = data.get("name")
 
         # Check if the email is already in use
         existing_user = User.query.filter_by(Email=email).first()
         if existing_user:
             return jsonify({
-                "status": "error",
+                "success": False,
                 "message": "Email is already in use"
             }), 400
 
@@ -108,13 +109,13 @@ def register():
             db.session.commit()
             login_user(new_user)
             return jsonify({
-                "status": "success", 
+                "success": True,
                 "message": "User registered and logged in successfully"
             }), 201
         except IntegrityError:
             db.session.rollback()
             return jsonify({
-                "status": "error",
+                "success": False,
                 "message": "An error occurred while registering the user"
             }), 500
             
