@@ -456,4 +456,5 @@ if __name__ == "__main__":
         print(" * Initializating database tables")
         with app.app_context():
             db.create_all()
-    app.run(debug=True)
+    else:
+        app.run(debug=True)
