@@ -1,5 +1,4 @@
 from flask import Flask, request, redirect, url_for, flash, jsonify, session, send_from_directory
-from flask_login import LoginManager, login_user, login_required, current_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import argparse
 from models import db, User, Transaction, Submission, Peoplemetrics, Planetmetrics, Prosperitymetrics, Governancemetrics
@@ -22,16 +21,14 @@ import random
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecochain.db'
 app.config['SECRET_KEY'] = 'thisisasecretkey'
-login_manager = LoginManager()
-login_manager.init_app(app)
 db.init_app(app)
-CORS(app)
+CORS(app, origins=["http://localhost:8080"], supports_credentials=True)
 fake = Faker()
 
-@login_manager.user_loader
-def load_user(user_id):
-    return db.session.get(User, int(user_id))
-
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_SAMESITE='None'
+)
 
 @app.route("/")
 def home():
@@ -50,7 +47,6 @@ def login():
         user = User.query.filter_by(Email=email).first()
 
         if user and check_password_hash(user.Password, password):
-            login_user(user)
             return jsonify({
                 "success": True,
                 "message": "Logged in successfully"
@@ -68,8 +64,6 @@ def login():
 
 @app.route("/logout", methods=["POST"])
 def logout():
-    # Log out the current user
-    logout_user()
 
     # Reset the submission_id in the session
     session.pop('submission_id', None)
@@ -108,7 +102,6 @@ def register():
         try:
             db.session.add(new_user)
             db.session.commit()
-            login_user(new_user)
             return jsonify({
                 "success": True,
                 "message": "User registered and logged in successfully"
@@ -126,7 +119,6 @@ def register():
         }), 200
 
 @app.route("/start_submission", methods=["POST"])
-@login_required
 def start_submission():
     if request.method == "POST":
         data = request.get_json()
@@ -164,7 +156,6 @@ def start_submission():
 
 
 @app.route("/input_peoplemetrics", methods=["POST"])
-@login_required
 def input_peoplemetrics():
         # Retrieve the submission_id from the session
     submission_id = session.get('submission_id')
@@ -212,7 +203,6 @@ def input_peoplemetrics():
         }), 500
 
 @app.route("/input_planetmetrics", methods=["POST"])
-@login_required
 def input_planetmetrics():
 
     # Retrieve the submission_id from the session
@@ -259,7 +249,6 @@ def input_planetmetrics():
 
 
 @app.route("/input_prosperitymetrics", methods=["POST"])
-@login_required
 def input_prosperitymetrics():
 
     # Retrieve the submission_id from the session
@@ -321,7 +310,6 @@ def input_prosperitymetrics():
 
 
 @app.route("/input_governancemetrics", methods=["POST"])
-@login_required
 def input_governancemetrics():
 
     # Retrieve the submission_id from the session
@@ -369,7 +357,6 @@ def input_governancemetrics():
 
 
 @app.route('/trans', methods=['GET'])
-@login_required
 def trans():
 
     submission_id = session.get('submission_id')
@@ -433,7 +420,6 @@ def trans():
 
 # Use this protected decorator for all sensitive information
 @app.route('/protected')
-@login_required
 def protected_route():
     return jsonify({
         "success": True,  
@@ -444,7 +430,6 @@ def protected_route():
 
 
 @app.route('/get_reports')
-@login_required
 def get_reports():
     if request.method == "GET":
         #return json object with report data for current_user.companyID
@@ -455,20 +440,20 @@ def get_reports():
         }), 200
     
 @app.route('/get_dashboard')
-@login_required
 def get_dashboard_data():
-    subs = Submission.query.filter_by(UserID = current_user.UserID).all()
+    if request.method == "GET":
+        subs = Submission.query.filter_by(UserID = current_user.UserID).all()
 
-    serialized_subs = [sub.as_dict() for sub in subs]
+        serialized_subs = [sub.as_dict() for sub in subs]
 
-    return jsonify({
-        "success": True,
-        "id": current_user.UserID,
-        "email" : current_user.Email,
-        "name": current_user.Name,
-        "algo_add" : current_user.AlgorandAddress,
-        "submissions": serialized_subs
-    }), 200
+        return jsonify({
+            "success": True,
+            "id": current_user.UserID,
+            "email" : current_user.Email,
+            "name": current_user.Name,
+            "algo_add" : current_user.AlgorandAddress,
+            "submissions": serialized_subs
+        }), 200
 
 def generate_dummy_data():
     with app.app_context():
@@ -547,4 +532,4 @@ if __name__ == "__main__":
             db.create_all()
             generate_dummy_data()
     else:
-        app.run(debug=True)
+        app.run(ssl_context='adhoc', debug=True)
