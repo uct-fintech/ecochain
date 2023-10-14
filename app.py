@@ -99,10 +99,8 @@ def register():
         try:
             db.session.add(new_user)
             db.session.commit()
-            return jsonify({
-                "success": True,
-                "message": "User registered and logged in successfully"
-            }), 201
+            access_token = create_access_token(identity=new_user.UserID)
+            return jsonify(access_token=access_token), 200
         except IntegrityError:
             db.session.rollback()
             return jsonify({
@@ -115,17 +113,10 @@ def register():
         "message": "GET request for register"
         }), 200
 
-@app.route("/start_submission", methods=["POST"])
+@app.route("/start_submission", methods=["GET"])
 @jwt_required()
 def start_submission():
-    if request.method == "POST":
-        data = request.get_json()
-        first_name = data.get("FirstName")
-        last_name = data.get("LastName")
-        
-        # Store these names in the current session for further use
-        session['first_name'] = first_name
-        session['last_name'] = last_name
+    if request.method == "GET":
         
         # Check if a submission ID already exists in the session
         submission_id = session.get('submission_id')
@@ -133,7 +124,7 @@ def start_submission():
         if not submission_id:
             # If not, create a new Submission record
             current_user_id = get_jwt_identity()
-            new_submission = Submission(UserID=current_user_id, FirstName=first_name, LastName=last_name)
+            new_submission = Submission(UserID=current_user_id)
             db.session.add(new_submission)
             db.session.commit()
             submission_id = new_submission.SubmissionID
@@ -156,8 +147,8 @@ def start_submission():
 @app.route("/input_peoplemetrics", methods=["POST"])
 @jwt_required()
 def input_peoplemetrics():
-        # Retrieve the submission_id from the session
-    submission_id = session.get('submission_id')
+    # Retrieve the submission_id from the session
+    submission_id = request.json.get("submission_id")
     
     # Check if submission_id exists in the session
     if not submission_id:
@@ -206,7 +197,7 @@ def input_peoplemetrics():
 def input_planetmetrics():
 
     # Retrieve the submission_id from the session
-    submission_id = session.get('submission_id')
+    submission_id = request.json.get("submission_id")
     
     # Check if submission_id exists in the session
     if not submission_id:

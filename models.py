@@ -18,8 +18,8 @@ class User(db.Model, UserMixin):
 
 class Submission(db.Model):
     SubmissionID = db.Column(db.Integer, primary_key=True)
-    FirstName = db.Column(db.String(100), nullable=False)
-    LastName = db.Column(db.String(100), nullable=False)
+    FirstName = db.Column(db.String(100))
+    LastName = db.Column(db.String(100))
     Date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     Year = db.Column(db.Integer)
     Score = db.Column(db.Double)
