@@ -384,8 +384,8 @@ def trans():
 
     private_key = "4pGX12svaEoBYqBX7WfriGIhUB3VjkeUofm6IM3Y+6b69JOah+47V6+PX/KeLfpDMv683zGwQ2R83pkdj7FwCA=="
     my_address = "7L2JHGUH5Y5VPL4PL7ZJ4LP2IMZP5PG7GGYEGZD432MR3D5ROAEDKWFGRU"
-    current_user_id = get_jwt_identity()
-    current_user = session.User()
+    user_id = get_jwt_identity()
+    current_user = db.session.get(User, user_id)
     rec_address = current_user.AlgorandAddress
 
     txid, confirmedTxn = first_transaction_example(private_key, my_address, rec_address, data)
