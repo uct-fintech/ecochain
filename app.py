@@ -10,12 +10,12 @@ from algosdk import account
 import json
 from algotransaction import first_transaction_example
 from algosdk.v2client import algod
+from asa_creation import mintnft
 import json
 from base64 import b64decode
 from algosdk import transaction
 from algosdk.transaction import PaymentTxn
 from utils import algod_details
-from manage_account import get_user_account
 from faker import Faker
 import random
 
@@ -396,11 +396,24 @@ def trans():
             "success": False,
             "message": "Failed to confirm the transaction"
         }), 500
+    
+    txidNFT, confirmed_txnNFT, created_asset = mintnft(private_key, my_address, txid)
+
+
+    if not confirmed_txnNFT:
+        return jsonify({
+        "success": False,
+        "message": "Failed to confirm the transaction"
+    }), 500
 
     AlgoTransaction = txid
+    NFTTransactionMint = txidNFT
+    NFTAsset = created_asset
     
     new_metric = Transaction(
             TransactionID=AlgoTransaction,
+            NFTTransactionMintID=NFTTransactionMint,
+            NFTAssetID=NFTAsset,
             SubmissionID=submission_id
     )
 
