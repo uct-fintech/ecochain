@@ -11,6 +11,7 @@ class User(db.Model, UserMixin):
     Name = db.Column(db.String(100), nullable=False)
     AlgorandPrivateKey = db.Column(db.String(100))
     AlgorandAddress = db.Column(db.String(100))
+    
 
     def get_id(self):
         return str(self.UserID)
@@ -20,7 +21,13 @@ class Submission(db.Model):
     FirstName = db.Column(db.String(100), nullable=False)
     LastName = db.Column(db.String(100), nullable=False)
     Date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    Year = db.Column(db.Integer)
+    Score = db.Column(db.Double)
+    Status = db.Column(db.Integer) # 0: in progress, 1: complete, 2: rejected
     UserID = db.Column(db.Integer, db.ForeignKey('user.UserID'))
+
+    def as_dict(self):
+       return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 class Peoplemetrics(db.Model):

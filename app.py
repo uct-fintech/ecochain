@@ -17,6 +17,7 @@ from utils import algod_details
 from manage_account import get_user_account
 from flask_cors import CORS
 from faker import Faker
+import random
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecochain.db'
@@ -29,7 +30,7 @@ fake = Faker()
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 
 @app.route("/")
@@ -453,43 +454,41 @@ def get_reports():
             "id": current_user.CompanyID
         }), 200
     
-@app.route('/get_user')
+@app.route('/get_dashboard')
 @login_required
 def get_dashboard_data():
+    subs = Submission.query.filter_by(UserID = current_user.UserID).all()
+
+    serialized_subs = [sub.as_dict() for sub in subs]
+
     return jsonify({
         "success": True,
         "id": current_user.UserID,
         "email" : current_user.Email,
         "name": current_user.Name,
-        "algo_add" : current_user.AlgorandAddress
+        "algo_add" : current_user.AlgorandAddress,
+        "submissions": serialized_subs
     }), 200
 
 def generate_dummy_data():
     with app.app_context():
-        # Add dummy users
         users = User.query.all()
-
-        # Commit users to get their IDs
-        db.session.commit()
 
         # Add dummy submissions
         submissions = []
         for user in users:
-            sub = Submission(
-                FirstName=fake.first_name(),
-                LastName=fake.last_name(),
-                Date=fake.date_this_decade(),
-                UserID=user.UserID
-            )
-            db.session.add(sub)
-            sub2 = Submission(
-                FirstName=fake.first_name(),
-                LastName=fake.last_name(),
-                Date=fake.date_this_decade(),
-                UserID=user.UserID
-            )
-            db.session.add(sub2)
-            submissions.append(sub)
+            for _ in range(3):
+                submission = Submission(
+                    FirstName=fake.first_name(),
+                    LastName=fake.last_name(),
+                    Date=fake.date_this_decade(),
+                    Year=fake.year(),  # Generate a year
+                    Score=random.uniform(0, 100),  # Generate a random score between 0 and 100
+                    Status=random.choice([0, 1, 2]),  # Randomly choose a status
+                    UserID=user.UserID
+                )
+                db.session.add(submission)
+                submissions.append(submission)
 
         db.session.commit()
 
@@ -541,11 +540,11 @@ if __name__ == "__main__":
     parser.add_argument('--init', action='store_true', help='Initialize the database tables.')
     args = parser.parse_args()
 
-    # generate_dummy_data()
     
     if args.init:
         print(" * Initializating database tables")
         with app.app_context():
             db.create_all()
+            generate_dummy_data()
     else:
         app.run(debug=True)
