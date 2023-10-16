@@ -38,7 +38,7 @@ def home():
         "message": "Welcome to EcoChain"
         }), 200
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login", methods=["POST"])
 def login():
     if request.method == "POST":
         email = request.json.get('email')
@@ -56,11 +56,6 @@ def login():
             "success": False, 
             "message": "Invalid email or password"
             }), 401
-    
-    return jsonify({
-        "status": "info", 
-        "message": "GET request for login"
-        }), 200
 
 @app.route("/logout", methods=["POST"])
 def logout():
