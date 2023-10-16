@@ -58,7 +58,7 @@ def login():
             "message": "Invalid email or password"
             }), 401
 
-@app.route("/register", methods=["GET", "POST"])
+@app.route("/register", methods=["POST"])
 def register():
     if request.method == "POST":
         email = request.json.get("email")
@@ -95,11 +95,28 @@ def register():
                 "success": False,
                 "message": "An error occurred while registering the user"
             }), 500
-            
-    return jsonify({
-        "status": "info", 
-        "message": "GET request for register"
-        }), 200
+
+@app.route("/update_org", methods=["POST"])
+@jwt_required()
+def update_org():
+    if request.method == "POST":
+        location = request.json.get("location")
+        industry = request.json.get("industry")
+        size = request.json.get("size")
+        description = request.json.get("description")
+
+        current_user_id = get_jwt_identity()
+        user = User.query.get(current_user_id)
+        
+        # Update the fields
+        user.Location = location
+        user.Size = size
+        user.Industry = industry
+        user.Description = description
+        # Commit the changes to the database
+        db.session.commit()
+        return jsonify(success=True), 200
+
 
 @app.route("/start_submission", methods=["GET"])
 @jwt_required()
@@ -112,7 +129,8 @@ def start_submission():
         if not submission_id:
             # If not, create a new Submission record
             current_user_id = get_jwt_identity()
-            new_submission = Submission(UserID=current_user_id)
+            new_submission = Submission(UserID=current_user_id,
+                                        Status=0)
             db.session.add(new_submission)
             db.session.commit()
             submission_id = new_submission.SubmissionID
@@ -475,6 +493,10 @@ def get_dashboard_data():
             "email" : current_user.Email,
             "name": current_user.Name,
             "algo_add" : current_user.AlgorandAddress,
+            "location": current_user.Location,
+            "industry" : current_user.Industry,
+            "size": current_user.Size,
+            "description" : current_user.Description,
             "submissions": serialized_subs
         }), 200
 

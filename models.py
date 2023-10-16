@@ -11,6 +11,10 @@ class User(db.Model, UserMixin):
     Name = db.Column(db.String(100), nullable=False)
     AlgorandPrivateKey = db.Column(db.String(100))
     AlgorandAddress = db.Column(db.String(100))
+    Location = db.Column(db.String(100))
+    Industry = db.Column(db.String(100))
+    Size = db.Column(db.String(100))
+    Description = db.Column(db.String())
     
 
     def get_id(self):
