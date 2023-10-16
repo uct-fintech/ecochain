@@ -50,23 +50,13 @@ def login():
 
         if user and check_password_hash(user.Password, password):
             access_token = create_access_token(identity=user.UserID)
-            return jsonify(access_token=access_token), 200
+            print("Access token created: ", access_token)
+            return jsonify(access_token=access_token, success=True), 200
         
         return jsonify({
             "success": False, 
             "message": "Invalid email or password"
             }), 401
-
-@app.route("/logout", methods=["POST"])
-def logout():
-
-    # Reset the submission_id in the session
-    session.pop('submission_id', None)
-    
-    return jsonify({
-        "status": "success", 
-        "message": "Logged out successfully"
-    }), 200
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -97,7 +87,8 @@ def register():
             db.session.add(new_user)
             db.session.commit()
             access_token = create_access_token(identity=new_user.UserID)
-            return jsonify(access_token=access_token), 200
+            print("Access token created: ", access_token)
+            return jsonify(access_token=access_token, success=True), 200
         except IntegrityError:
             db.session.rollback()
             return jsonify({
@@ -541,12 +532,6 @@ def generate_dummy_data():
                 AntiCorruptionTraining=fake.random_number(digits=2),
                 ConfirmedCorruptionIncidentPrev=fake.random_number(digits=2),
                 ConfirmedCorruptionIncidentCurrent=fake.random_number(digits=2),
-                SubmissionID=sub.SubmissionID
-            ))
-            
-            db.session.add(Transaction(
-                TransactionID=fake.sha256(),
-                NFTTransactionID=fake.sha256(),
                 SubmissionID=sub.SubmissionID
             ))
 
