@@ -19,6 +19,13 @@ def asa_recieve (acct2_address,acct2_privatekey,created_asset):
     txid = algod_client.send_transaction(signed_optin_txn)
     print(f"Sent opt in transaction with txid: {txid}")
 
-    # Wait for the transaction to be confirmed
-    results = transaction.wait_for_confirmation(algod_client, txid, 4)
+ # wait for confirmation
+    try:
+        results = transaction.wait_for_confirmation(algod_client, txid, 4)
+    except Exception as err:
+        print(err)
+        return txid
+    
     print(f"Result confirmed in round: {results['confirmed-round']}")
+
+    return txid, results

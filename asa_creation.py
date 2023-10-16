@@ -13,8 +13,6 @@ from utils import algod_details
 
 def mintnft(private_key, my_address, transID1):
     algod_address, algod_token, headers = algod_details()
-
-
     algod_client = algod.AlgodClient(algod_token, algod_address, headers)
 
     account_info = algod_client.account_info(my_address)

@@ -17,9 +17,16 @@ def asa_opt_in (acct2_address,acct2_privatekey,created_asset):
         sender=acct2_address, sp=sp, index=created_asset
     )
     signed_optin_txn = optin_txn.sign(acct2_privatekey)
-    txid = algod_client.send_transaction(signed_optin_txn)
-    print(f"Sent opt in transaction with txid: {txid}")
+    signed_optin_txid = algod_client.send_transaction(signed_optin_txn)
+    print(f"Sent opt in transaction with txid: {signed_optin_txid}")
 
-    # Wait for the transaction to be confirmed
-    results = transaction.wait_for_confirmation(algod_client, txid, 4)
+    # wait for confirmation
+    try:
+        results = transaction.wait_for_confirmation(algod_client, signed_optin_txid, 4)
+    except Exception as err:
+        print(err)
+        return signed_optin_txid
+
     print(f"Result confirmed in round: {results['confirmed-round']}")
+
+    return signed_optin_txid, results
