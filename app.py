@@ -9,10 +9,10 @@ from sqlalchemy.inspection import inspect
 from algosdk import account
 import json
 from algotransaction import first_transaction_example
-from asa_opt_in import asa_opt_in
-from asa_recieve import asa_recieve
 from algosdk.v2client import algod
 from asa_creation import mintnft
+from asa_opt_in import asa_opt_in
+from asa_recieve import asa_recieve
 import json
 from base64 import b64decode
 from algosdk import transaction
@@ -399,7 +399,28 @@ def trans():
         "message": "Failed to confirm the transaction"
     }), 500
 
+    # is the priavte key variable ecochain private key or user priavte key? it should be user private key.
+    signed_optin_txid, Opt_in_confirmed_txn = asa_opt_in (rec_address,private_key,created_asset)
 
+    if not Opt_in_confirmed_txn:
+        return jsonify({
+        "success": False,
+        "message": "Failed to confirm the transaction"
+    }), 500
+
+
+    # is the priavte key variable ecochain private key or user priavte key? it should be user private key.
+    asa_receive_txid, user_recieved_confirm = asa_recieve (rec_address,private_key,created_asset)
+
+    if not user_recieved_confirm:
+        return jsonify({
+        "success": False,
+        "message": "Failed to confirm the transaction"
+    }), 500
+
+
+    asa_recieve_txid = asa_receive_txid
+    Opt_in_txid = signed_optin_txid
     AlgoTransaction = txid
     NFTTransactionMint = txidNFT
     NFTAsset = created_asset
