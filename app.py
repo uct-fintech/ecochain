@@ -10,9 +10,7 @@ from algosdk import account
 import json
 from algotransaction import first_transaction_example
 from algosdk.v2client import algod
-from asa_creation import mintnft
-from asa_opt_in import asa_opt_in
-from asa_recieve import asa_recieve
+from asa_creation import createASA, optinASA, transferASA
 import json
 from base64 import b64decode
 from algosdk import transaction
@@ -20,6 +18,9 @@ from algosdk.transaction import PaymentTxn
 from utils import algod_details
 from faker import Faker
 import random
+
+ecochainPK = "4pGX12svaEoBYqBX7WfriGIhUB3VjkeUofm6IM3Y+6b69JOah+47V6+PX/KeLfpDMv683zGwQ2R83pkdj7FwCA=="
+ecochainAddress = "7L2JHGUH5Y5VPL4PL7ZJ4LP2IMZP5PG7GGYEGZD432MR3D5ROAEDKWFGRU"
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecochain.db'
@@ -75,6 +76,12 @@ def register():
 
         hashed_password = generate_password_hash(password)
         private_key, address = account.generate_account()
+
+        #add funds to user account
+        transamount = 300000  #0.3 algos as algo account must have a minimum of 0.1 algo, gas fees are 0.0001 so users have 300 free transactions
+        algonote = {"algo top-up": transamount}
+
+        confirmedTxn = first_transaction_example(ecochainPK, ecochainAddress, address, transamount,  algonote)
         
         new_user = User(Email=email, 
                         Password=hashed_password, 
@@ -379,14 +386,15 @@ def trans():
     # Remove the SubmissionID key as it's common and not needed in the output
     data.pop('SubmissionID', None)
 
-    private_key = "4pGX12svaEoBYqBX7WfriGIhUB3VjkeUofm6IM3Y+6b69JOah+47V6+PX/KeLfpDMv683zGwQ2R83pkdj7FwCA=="
-    my_address = "7L2JHGUH5Y5VPL4PL7ZJ4LP2IMZP5PG7GGYEGZD432MR3D5ROAEDKWFGRU"
+    private_key = ecochainPK
+    my_address = ecochainAddress
     user_id = get_jwt_identity()
     current_user = db.session.get(User, user_id)
     rec_address = current_user.AlgorandAddress
     rec_privateKey = current_user.AlgorandPrivateKey
+    transamount = 0
 
-    txid, confirmedTxn = first_transaction_example(private_key, my_address, rec_address, data)
+    txid, confirmedTxn = first_transaction_example(private_key, my_address, rec_address, transamount,  data)
 
     # Check if confirmed_txn has the expected structure or keys
     if not confirmedTxn:
@@ -395,7 +403,7 @@ def trans():
             "message": "Failed to confirm the transaction"
         }), 500
     
-    txidNFT, confirmed_txnNFT, created_asset = mintnft(private_key, my_address, txid)
+    txidNFT, confirmed_txnNFT, created_asset = createASA(private_key, my_address, txid)
 
 
     if not confirmed_txnNFT:
@@ -404,8 +412,8 @@ def trans():
         "message": "Failed to confirm the transaction"
     }), 500
 
-    # is the priavte key variable ecochain private key or user priavte key? it should be user private key.
-    signed_optin_txid, Opt_in_confirmed_txn = asa_opt_in (rec_address,rec_privateKey,created_asset)
+
+    signed_optin_txid, Opt_in_confirmed_txn = optinASA (rec_address,rec_privateKey,created_asset)
 
     if not Opt_in_confirmed_txn:
         return jsonify({
@@ -414,8 +422,8 @@ def trans():
     }), 500
 
 
-    # is the priavte key variable ecochain private key or user priavte key? it should be user private key.
-    asa_receive_txid, user_recieved_confirm = asa_recieve (my_address, private_key, rec_address, created_asset)
+
+    asa_receive_txid, user_recieved_confirm = transferASA (my_address, private_key, rec_address, created_asset)
 
     if not user_recieved_confirm:
         return jsonify({

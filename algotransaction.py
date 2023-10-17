@@ -13,7 +13,7 @@ from utils import algod_details
 
 
 
-def first_transaction_example(private_key, my_address, rec_address, metric_metadata):
+def first_transaction_example(private_key, my_address, rec_address, specAmount, metric_metadata):
     algod_address, algod_token, headers = algod_details()
 
     algod_client = algod.AlgodClient(algod_token, algod_address, headers)
@@ -36,7 +36,13 @@ def first_transaction_example(private_key, my_address, rec_address, metric_metad
         # Convert the list to a single string and then encode
     note = ', '.join(all_data).encode()
 
-    unsigned_txn = PaymentTxn(my_address, params, receiver, 0, None, note)
+    unsigned_txn = PaymentTxn(
+        sender=my_address,
+        sp=params,
+        receiver=rec_address,
+        amt=specAmount,
+        note=note,
+    )
 
     # sign transaction
     signed_txn = unsigned_txn.sign(private_key)
