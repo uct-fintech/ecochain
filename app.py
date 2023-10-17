@@ -154,7 +154,7 @@ def start_submission():
 @jwt_required()
 def input_peoplemetrics():
     # Retrieve the submission_id from the session
-    submission_id = request.json.get("submission_id")
+    submission_id = session.get("submission_id")
     
     # Check if submission_id exists in the session
     if not submission_id:
@@ -203,7 +203,7 @@ def input_peoplemetrics():
 def input_planetmetrics():
 
     # Retrieve the submission_id from the session
-    submission_id = request.json.get("submission_id")
+    submission_id = session.get("submission_id")
     
     # Check if submission_id exists in the session
     if not submission_id:
@@ -384,6 +384,7 @@ def trans():
     user_id = get_jwt_identity()
     current_user = db.session.get(User, user_id)
     rec_address = current_user.AlgorandAddress
+    rec_privateKey = current_user.AlgorandPrivateKey
 
     txid, confirmedTxn = first_transaction_example(private_key, my_address, rec_address, data)
 
@@ -404,7 +405,7 @@ def trans():
     }), 500
 
     # is the priavte key variable ecochain private key or user priavte key? it should be user private key.
-    signed_optin_txid, Opt_in_confirmed_txn = asa_opt_in (rec_address,private_key,created_asset)
+    signed_optin_txid, Opt_in_confirmed_txn = asa_opt_in (rec_address,rec_privateKey,created_asset)
 
     if not Opt_in_confirmed_txn:
         return jsonify({
@@ -414,7 +415,7 @@ def trans():
 
 
     # is the priavte key variable ecochain private key or user priavte key? it should be user private key.
-    asa_receive_txid, user_recieved_confirm = asa_recieve (rec_address,private_key,created_asset)
+    asa_receive_txid, user_recieved_confirm = asa_recieve (my_address, private_key, rec_address, created_asset)
 
     if not user_recieved_confirm:
         return jsonify({
@@ -423,8 +424,7 @@ def trans():
     }), 500
 
 
-    asa_recieve_txid = asa_receive_txid
-    Opt_in_txid = signed_optin_txid
+    NFTTransactionTransfer = asa_receive_txid
     AlgoTransaction = txid
     NFTTransactionMint = txidNFT
     NFTAsset = created_asset
@@ -432,6 +432,7 @@ def trans():
     new_metric = Transaction(
             TransactionID=AlgoTransaction,
             NFTTransactionMintID=NFTTransactionMint,
+            NFTTransactionTransferID = NFTTransactionTransfer,
             NFTAssetID=NFTAsset,
             SubmissionID=submission_id
     )
