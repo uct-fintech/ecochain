@@ -24,3 +24,8 @@ six==1.16.0
 SQLAlchemy==2.0.21
 typing_extensions==4.8.0
 Werkzeug==2.3.7
+python-dotenv==1.0.0
+Flask-Mail==0.9.1
+Flask-JWT-Extended==4.5.3
+Faker=19.10.0
+
