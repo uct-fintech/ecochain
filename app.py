@@ -444,10 +444,12 @@ def trans():
             NFTAssetID=NFTAsset,
             SubmissionID=submission_id
     )
-
+    
     try:
         db.session.add(new_metric)
         db.session.commit()
+        user_email = current_user.Email  
+        sendEmail(user_email, "Eco Chain ESG Report", AlgoTransaction, txidNFT)
         return jsonify({
             "success": True,  
             "message": "Transaction recorded successfully"
@@ -473,6 +475,21 @@ def protected_route():
         "email" : current_user.Email
     }), 200
 
+def sendEmail(recipient, subject, transaction_id, nft_id):
+    
+    transaction_link = f"https://testnet.algoexplorer.io/tx/{transaction_id}"
+    nft_link = f"https://testnet.algoexplorer.io/asset/{nft_id}"
+
+   
+    body = f"Thank you for submitting your report. Please find your transaction below: {transaction_link} and the NFT here: {nft_link}."
+
+    msg = Message(subject, sender=('Ecochain', 'ecochain0@gmail.com'), recipients=[recipient])
+    msg.body = body
+    mail.send(msg)
+
+    flash('Email sent successfully!', 'success') #change this 
+
+   
 @app.route('/get_reports')
 @jwt_required()
 def get_reports():
