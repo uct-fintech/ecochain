@@ -17,15 +17,20 @@ from algosdk import transaction
 from algosdk.transaction import PaymentTxn
 from utils import algod_details
 from faker import Faker
+from flask_mail import Mail, Message
+from dotenv import load_dotenv
+import os
 import random
 
 ecochainPK = "4pGX12svaEoBYqBX7WfriGIhUB3VjkeUofm6IM3Y+6b69JOah+47V6+PX/KeLfpDMv683zGwQ2R83pkdj7FwCA=="
 ecochainAddress = "7L2JHGUH5Y5VPL4PL7ZJ4LP2IMZP5PG7GGYEGZD432MR3D5ROAEDKWFGRU"
-
+load_dotenv() 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecochain.db'
 app.config['SECRET_KEY'] = 'thisisasecretkey'
 app.config['JWT_SECRET_KEY'] = 'super-secret'  # Change this in production
+mail = Mail(app)
+
 jwt = JWTManager(app)
 
 db.init_app(app)
