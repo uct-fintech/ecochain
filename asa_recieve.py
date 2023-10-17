@@ -6,18 +6,22 @@ from algosdk.transaction import PaymentTxn
 from utils import algod_details
 
 
-def asa_recieve (acct2_address,acct2_privatekey,created_asset):
+def asa_recieve (send_add, send_pk, rec_add, created_asset):
     algod_address, algod_token, headers = algod_details()
     algod_client = algod.AlgodClient(algod_token, algod_address, headers)
     sp = algod_client.suggested_params()
     # Create opt-in transaction
     # asset transfer from me to me for asset id we want to opt-in to with amt==0
-    optin_txn = transaction.AssetOptInTxn(
-        sender=acct2_address, sp=sp, index=created_asset
+    xfer_txn  = transaction.AssetTransferTxn(
+        sender=send_add,
+        sp=sp,
+        receiver=rec_add,
+        amt=1,
+        index=created_asset,
     )
-    signed_optin_txn = optin_txn.sign(acct2_privatekey)
-    txid = algod_client.send_transaction(signed_optin_txn)
-    print(f"Sent opt in transaction with txid: {txid}")
+    signed_xfer_txn = xfer_txn.sign(send_pk)
+    txid = algod_client.send_transaction(signed_xfer_txn)
+    print(f"Sent transfer transaction with txid: {txid}")
 
  # wait for confirmation
     try:
