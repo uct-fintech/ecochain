@@ -83,7 +83,7 @@ def register():
         private_key, address = account.generate_account()
 
         #add funds to user account
-        transamount = 300000  #0.3 algos as algo account must have a minimum of 0.1 algo, gas fees are 0.0001 so users have 300 free transactions
+        transamount = 1000000  #0.3 algos as algo account must have a minimum of 0.1 algo, gas fees are 0.0001 so users have 300 free transactions
         algonote = {"algo top-up": transamount}
 
         confirmedTxn = first_transaction_example(ecochainPK, ecochainAddress, address, transamount,  algonote)
@@ -454,7 +454,7 @@ def trans():
         db.session.add(new_metric)
         db.session.commit()
         user_email = current_user.Email  
-        sendEmail(user_email, "Eco Chain ESG Report", AlgoTransaction, txidNFT)
+        sendEmail(user_email, "Eco Chain ESG Report", AlgoTransaction, NFTAsset)
         return jsonify({
             "success": True,  
             "message": "Transaction recorded successfully"
