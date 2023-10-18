@@ -29,6 +29,13 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecochain.db'
 app.config['SECRET_KEY'] = 'thisisasecretkey'
 app.config['JWT_SECRET_KEY'] = 'super-secret'  # Change this in production
+app.config['MAIL_SERVER'] = 'mail.smtp2go.com'
+app.config['MAIL_PORT'] = 587  # Use 465 for SSL
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = os.environ.get('SMTP2GO_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('SMTP2GO_PASSWORD')
+
 mail = Mail(app)
 
 jwt = JWTManager(app)
@@ -83,7 +90,7 @@ def register():
         private_key, address = account.generate_account()
 
         #add funds to user account
-        transamount = 300000  #0.3 algos as algo account must have a minimum of 0.1 algo, gas fees are 0.0001 so users have 300 free transactions
+        transamount = 1000000  #0.3 algos as algo account must have a minimum of 0.1 algo, gas fees are 0.0001 so users have 300 free transactions
         algonote = {"algo top-up": transamount}
 
         confirmedTxn = first_transaction_example(ecochainPK, ecochainAddress, address, transamount,  algonote)
@@ -448,7 +455,8 @@ def trans():
         db.session.add(new_metric)
         db.session.commit()
         user_email = current_user.Email  
-        sendEmail(user_email, "Eco Chain ESG Report", AlgoTransaction, txidNFT)
+        print("try to print email")
+        sendEmail(user_email, "Eco Chain ESG Report", AlgoTransaction, NFTAsset)
         return jsonify({
             "success": True,  
             "message": "Transaction recorded successfully"
@@ -478,6 +486,7 @@ def sendEmail(recipient, subject, transaction_id, nft_id):
     
     transaction_link = f"https://testnet.algoexplorer.io/tx/{transaction_id}"
     nft_link = f"https://testnet.algoexplorer.io/asset/{nft_id}"
+
 
    
     body = f"Thank you for submitting your report. Please find your transaction below: {transaction_link} and the NFT here: {nft_link}."
