@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for, flash, jsonify, session, send_from_directory
+from flask import Flask, request, redirect, url_for, flash, jsonify, session, send_from_directory, render_template_string  
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -21,6 +21,7 @@ from flask_mail import Mail, Message
 from dotenv import load_dotenv
 import os
 import random
+from datetime import datetime
 
 ecochainPK = "4pGX12svaEoBYqBX7WfriGIhUB3VjkeUofm6IM3Y+6b69JOah+47V6+PX/KeLfpDMv683zGwQ2R83pkdj7FwCA=="
 ecochainAddress = "7L2JHGUH5Y5VPL4PL7ZJ4LP2IMZP5PG7GGYEGZD432MR3D5ROAEDKWFGRU"
@@ -168,6 +169,60 @@ def start_submission():
             "status": "info", 
             "message": "GET request for start_submission"
         }), 200
+
+@app.route("/input_submission", methods=["POST"])
+@jwt_required()
+def input_submission():
+    # Retrieve the submission_id from the session
+    submission_id = session.get("submission_id")
+    user_id = get_jwt_identity()
+    
+    # Check if submission_id exists in the session
+    if not submission_id:
+        return jsonify({
+            "success": False, 
+            "message": "No active submission session found. Start a new submission first."
+        }), 400
+    data = request.get_json()
+
+    first_name = data.get("First_Name")
+    last_name = data.get("Last_Name")
+    start_period_str = data.get("Start_Period")
+    end_period_str = data.get("End_Period")
+
+    start_period = datetime.strptime(start_period_str, '%Y-%m-%d').date()
+    end_period = datetime.strptime(end_period_str, '%Y-%m-%d').date()
+    
+    existing_info = Submission.query.filter_by(SubmissionID=submission_id).first()
+    
+    if existing_info:
+        existing_info.FirstName = first_name
+        existing_info.LastName = last_name
+        existing_info.StartPeriod = start_period
+        existing_info.EndPeriod = end_period
+    else:
+        new_info = Submission(
+            FirstName=first_name,
+            LastName=last_name,
+            StartPeriod=start_period,
+            EndPeriod=end_period,
+            SubmissionID=submission_id,
+            UserID = user_id
+        )
+        db.session.add(new_info)
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            "success": True, 
+            "message": "User details added successfully"
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
 
 @app.route("/input_peoplemetrics", methods=["POST"])
 @jwt_required()
@@ -376,6 +431,8 @@ def input_governancemetrics():
 def trans():
 
     submission_id = session.get('submission_id')
+
+    submission = Submission.query.get(submission_id)
     
     if not submission_id:
         return jsonify({
@@ -388,12 +445,15 @@ def trans():
 
     # Fetch metrics and create a combined dictionary
     data = {}
+    grouped_metrics = {}
     for model in models:
+        model_name = model.__name__
         metric = model.query.filter_by(SubmissionID=submission_id).first()
         if metric:
             # Get the column names and values for the metric using introspection
             columns = {column.name: getattr(metric, column.name) for column in inspect(model).columns}
             data.update(columns)
+            grouped_metrics[model_name] = columns
 
     # Remove the SubmissionID key as it's common and not needed in the output
     data.pop('SubmissionID', None)
@@ -460,9 +520,14 @@ def trans():
     try:
         db.session.add(new_metric)
         db.session.commit()
-        user_email = current_user.Email  
-        print("try to print email")
-        sendEmail(user_email, "Eco Chain ESG Report", AlgoTransaction, NFTAsset)
+        user_email = current_user.Email 
+        user_name = current_user.Name 
+        user_algoadd = rec_address
+        user_SRP = submission.StartPeriod
+        user_ERP = submission.EndPeriod
+        user_Date = submission.Date
+
+        sendEmail(user_email, user_name, "EcoChain ESG Report", user_algoadd, AlgoTransaction, NFTAsset, grouped_metrics, user_SRP, user_ERP, user_Date)
         return jsonify({
             "success": True,  
             "message": "Transaction recorded successfully"
@@ -488,20 +553,46 @@ def protected_route():
         "email" : current_user.Email
     }), 200
 
-def sendEmail(recipient, subject, transaction_id, nft_id):
-    
+def sendEmail(recipient_email, recipient_name, subject, algoaddress, transaction_id, nft_id, metrics, startPeriod, endPeriod, reportSubDate):
     transaction_link = f"https://testnet.algoexplorer.io/tx/{transaction_id}"
     nft_link = f"https://testnet.algoexplorer.io/asset/{nft_id}"
 
+    # Start constructing the email body
+    body = f"Dear {recipient_name},\n\n"
 
-   
-    body = f"Thank you for submitting your report. Please find your transaction below: {transaction_link} and the NFT here: {nft_link}."
+    body += "Thank you for submitting your report. Below are the details of your submission and the metrics you provided:\n\n"
+    body += f"Date of report submission: {reportSubDate}:\n"
+    body += f"Reporting period start date: {startPeriod}:\n"
+    body += f"Reporting period end date: {endPeriod}:\n\n"
+    
+    # Include the metrics in the email with headers
+    for group, metric_data in metrics.items():
+        body += f"{group}:\n"
+        for key, value in metric_data.items():
+            body += f"  - {key}: {value}\n"
+        body += "\n"
 
-    msg = Message(subject, sender=('Ecochain', 'ecochain0@gmail.com'), recipients=[recipient])
+    body += "\nAs part of our commitment to transparency and real-time verification, we have digital proofs available for your review. These are unique to your contribution and can be accessed anytime through the links provided below.\n\n"
+
+    body += f"Your Unique Algorand Address:\n{algoaddress}\n"
+    body += "(This address is unique to you, ensuring your contributions are securely recorded and accessible.)\n\n"
+
+    body += f"Explore the specifics of your environmental, social, and governance (ESG) metrics that have been immutably recorded on the blockchain.\n{transaction_link}\n\n"
+
+    body += f"Access your Non-Fungible Token (NFT), confirming your commitment to sustainable practices.\n{nft_link}\n\n"
+
+    # Conclusion and sign-off
+    body += "Your proactive steps towards sustainability are not just contributions; they are the building blocks of a greener, fairer, and more sustainable future for all. We are here to support and amplify your impact every step of the way.\n\n"
+
+    body += "With sincere appreciation,\n\n"
+    body += "The EcoChain Team\n"
+
+    # Prepare and send the email
+    msg = Message(subject, sender=('Ecochain', 'ecochain0@gmail.com'), recipients=[recipient_email])
     msg.body = body
     mail.send(msg)
 
-    flash('Email sent successfully!', 'success') #change this 
+    # You might want to handle the 'flash' messaging differently, based on where you call this function from.
 
    
 @app.route('/get_reports')
