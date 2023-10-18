@@ -162,18 +162,12 @@ def start_submission():
             "message": "GET request for start_submission"
         }), 200
 
-@app.route("/input_peoplemetrics", methods=["POST"])
+@app.route("/input_peoplemetrics/<submission_id>", methods=["POST"])
 @jwt_required()
-def input_peoplemetrics():
-    # Retrieve the submission_id from the session
-    submission_id = session.get("submission_id")
-    
-    # Check if submission_id exists in the session
-    if not submission_id:
-        return jsonify({
-            "success": False, 
-            "message": "No active submission session found. Start a new submission first."
-        }), 400
+def input_peoplemetrics(submission_id):
+   
+    # verify that subimissionid is valid 
+    print(submission_id)
     data = request.get_json()
     diversity_inclusion = data.get("DiversityAndInclusion")
     pay_equality = data.get("PayEquality")
@@ -465,7 +459,7 @@ def trans():
             "success": False, 
             "message": str(e)
         }), 500
-
+   
 
 # Use this protected decorator for all sensitive information
 @app.route('/protected')
