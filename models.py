@@ -27,6 +27,7 @@ class Submission(db.Model):
     Date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     StartPeriod = db.Column(db.Date, nullable=False)
     EndPeriod = db.Column(db.Date, nullable=False)
+    Year = db.Column(db.Integer)
     Score = db.Column(db.Double)
     Status = db.Column(db.Integer) # 0: in progress, 1: complete, 2: rejected
     UserID = db.Column(db.Integer, db.ForeignKey('user.UserID'))
