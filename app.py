@@ -613,21 +613,23 @@ def get_submission(submission_id):
             "error": "Submission not found"
         }), 404
     
-@app.route('/get_success_page')
+@app.route('/get_success_page/<int:submission_id>')
 @jwt_required()    
-def get_success_page():
-    if request.method == "GET":
+def get_success_page(submission_id):
+    if request.method == "GET":  
         user_id = get_jwt_identity()
         current_user = db.session.get(User, user_id)
         submission_id = session.get('submission_id')
 
         submission = Submission.query.get(submission_id)
+        submission.Status = 1
+        db.session.commit()
 
         return jsonify({
             "success": True,
             "id": current_user.UserID,
-            "transaction_id" : submission.TransactionID,
-            "nft_id": submission.NFTAssetID
+            "transaction_id": transaction.TransactionID,
+            "nft_id": transaction.NFTAssetID
         }), 200
 
 def generate_dummy_data():
