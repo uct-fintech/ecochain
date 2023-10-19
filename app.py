@@ -624,6 +624,23 @@ def get_dashboard_data():
             "description" : current_user.Description,
             "submissions": serialized_subs
         }), 200
+    
+@app.route('/get_success_page')
+@jwt_required()    
+def get_success_page():
+    if request.method == "GET":
+        user_id = get_jwt_identity()
+        current_user = db.session.get(User, user_id)
+        submission_id = session.get('submission_id')
+        submission = Submission.query.get(submission_id)
+
+
+        return jsonify({
+            "success": True,
+            "id": current_user.UserID,
+            "transaction_id" : submission.TransactionID,
+            "nft_id": submission.NFTAssetID
+        }), 200
 
 def generate_dummy_data():
     with app.app_context():
