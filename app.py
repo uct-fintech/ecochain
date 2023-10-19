@@ -218,6 +218,10 @@ def input_submission(submission_id):
             "message": str(e)
         }), 500
 
+def nullify_empty_string(string):
+    if string == "":
+        return None
+
 @app.route("/input_peoplemetrics/<submission_id>", methods=["POST"])
 @jwt_required()
 def input_peoplemetrics(submission_id):
@@ -225,10 +229,10 @@ def input_peoplemetrics(submission_id):
     # verify that subimissionid is valid 
     print(submission_id)
     data = request.get_json()
-    diversity_inclusion = data.get("DiversityAndInclusion")
-    pay_equality = data.get("PayEquality")
-    wage_level = data.get("WageLevel")
-    health_safety_level = data.get("HealthAndSafetyLevel")
+    diversity_inclusion = nullify_empty_string(data.get("DiversityAndInclusion"))
+    pay_equality = nullify_empty_string(data.get("PayEquality"))
+    wage_level = nullify_empty_string(data.get("WageLevel"))
+    health_safety_level = nullify_empty_string(data.get("HealthAndSafetyLevel"))
     
     existing_metric = Peoplemetrics.query.filter_by(SubmissionID=submission_id).first()
     
@@ -266,9 +270,9 @@ def input_planetmetrics(submission_id):
     data = request.get_json()
     print(data)
 
-    greenhouse_gas_emission = data.get("GreenhouseGasEmission")
-    water_consumption = data.get("WaterConsumption")
-    land_use = data.get("LandUse")
+    greenhouse_gas_emission = nullify_empty_string(data.get("GreenhouseGasEmission"))
+    water_consumption = nullify_empty_string(data.get("WaterConsumption"))
+    land_use = nullify_empty_string(data.get("LandUse"))
 
     existing_metric = Planetmetrics.query.filter_by(SubmissionID=submission_id).first()
 
@@ -303,13 +307,13 @@ def input_prosperitymetrics(submission_id):
   
     data = request.get_json()
     print(data)
-    total_tax_paid = data.get("TotalTaxPaid")
-    abs_number_of_new_emps = data.get("AbsNumberOfNewEmps")
-    abs_number_of_new_emp_turnover = data.get("AbsNumberOfNewEmpTurnover")
-    economic_contribution = data.get("EconomicContribution")
-    total_rnd_expenses = data.get("TotalRNDExpenses")
-    total_capital_expenditures = data.get("TotalCapitalExpenditures")
-    share_buybacks_and_dividend_payments = data.get("ShareBuyBacksAndDividendPayments")
+    total_tax_paid = nullify_empty_string(data.get("TotalTaxPaid"))
+    abs_number_of_new_emps = nullify_empty_string(data.get("AbsNumberOfNewEmps"))
+    abs_number_of_new_emp_turnover = nullify_empty_string(data.get("AbsNumberOfNewEmpTurnover"))
+    economic_contribution = nullify_empty_string(data.get("EconomicContribution"))
+    total_rnd_expenses = nullify_empty_string(data.get("TotalRNDExpenses"))
+    total_capital_expenditures = nullify_empty_string(data.get("TotalCapitalExpenditures"))
+    share_buybacks_and_dividend_payments = nullify_empty_string(data.get("ShareBuyBacksAndDividendPayments"))
 
     # Check if an entry with the submission_id already exists
     existing_metric = Prosperitymetrics.query.filter_by(SubmissionID=submission_id).first()
@@ -356,9 +360,9 @@ def input_governancemetrics(submission_id):
 
     data = request.get_json()
     print(data)
-    anti_corruption_training = data.get("AntiCorruptionTraining")
-    confirmed_corruption_incident_prev = data.get("ConfirmedCorruptionIncidentPrev")
-    confirmed_corruption_incident_current = data.get("ConfirmedCorruptionIncidentCurrent")
+    anti_corruption_training = nullify_empty_string(data.get("AntiCorruptionTraining"))
+    confirmed_corruption_incident_prev = nullify_empty_string(data.get("ConfirmedCorruptionIncidentPrev"))
+    confirmed_corruption_incident_current = nullify_empty_string(data.get("ConfirmedCorruptionIncidentCurrent"))
 
     existing_metric = Governancemetrics.query.filter_by(SubmissionID=submission_id).first()
 
@@ -474,6 +478,7 @@ def trans(submission_id):
     
     try:
         db.session.add(new_metric)
+        submission.Status = 1
         db.session.commit()
         user_email = current_user.Email 
         user_name = current_user.Name 
@@ -617,8 +622,6 @@ def get_success_page():
         submission_id = session.get('submission_id')
 
         submission = Submission.query.get(submission_id)
-        submission.Status = 1
-        db.session.commit()
 
         return jsonify({
             "success": True,
