@@ -145,12 +145,13 @@ def start_submission():
         
         # Check if a submission ID already exists in the session
         submission_id = session.get('submission_id')
-        
+        print("in here")
         if not submission_id:
             # If not, create a new Submission record
             current_user_id = get_jwt_identity()
             new_submission = Submission(UserID=current_user_id,
                                         Status=0)
+            
             db.session.add(new_submission)
             db.session.commit()
             submission_id = new_submission.SubmissionID
@@ -170,25 +171,18 @@ def start_submission():
             "message": "GET request for start_submission"
         }), 200
 
-@app.route("/input_submission", methods=["POST"])
+@app.route("/input_submission/<submission_id>", methods=["POST"])
 @jwt_required()
-def input_submission():
-    # Retrieve the submission_id from the session
-    submission_id = session.get("submission_id")
+def input_submission(submission_id):
+   
     user_id = get_jwt_identity()
-    
-    # Check if submission_id exists in the session
-    if not submission_id:
-        return jsonify({
-            "success": False, 
-            "message": "No active submission session found. Start a new submission first."
-        }), 400
     data = request.get_json()
+    print(data)
 
-    first_name = data.get("First_Name")
-    last_name = data.get("Last_Name")
-    start_period_str = data.get("Start_Period")
-    end_period_str = data.get("End_Period")
+    first_name = data.get("FirstName")
+    last_name = data.get("LastName")
+    start_period_str = data.get("StartPeriod")
+    end_period_str = data.get("EndPeriod")
 
     start_period = datetime.strptime(start_period_str, '%Y-%m-%d').date()
     end_period = datetime.strptime(end_period_str, '%Y-%m-%d').date()
@@ -224,7 +218,7 @@ def input_submission():
             "message": str(e)
         }), 500
 
-@app.route("/input_peoplemetrics", methods=["POST"])
+@app.route("/input_peoplemetrics/<submission_id>", methods=["POST"])
 @jwt_required()
 def input_peoplemetrics(submission_id):
    
@@ -265,21 +259,13 @@ def input_peoplemetrics(submission_id):
             "success": False,
             "message": str(e)
         }), 500
-
-@app.route("/input_planetmetrics", methods=["POST"])
-@jwt_required()
-def input_planetmetrics():
-
-    # Retrieve the submission_id from the session
-    submission_id = session.get("submission_id")
     
-    # Check if submission_id exists in the session
-    if not submission_id:
-        return jsonify({
-            "success": False, 
-            "message": "No active submission session found. Start a new submission first."
-        }), 400
+@app.route("/input_planetmetrics/<submission_id>", methods=["POST"])
+@jwt_required()
+def input_planetmetrics(submission_id):
     data = request.get_json()
+    print(data)
+
     greenhouse_gas_emission = data.get("GreenhouseGasEmission")
     water_consumption = data.get("WaterConsumption")
     land_use = data.get("LandUse")
@@ -311,21 +297,12 @@ def input_planetmetrics():
             "success": False,
             "message": str(e)
         }), 500
-
-@app.route("/input_prosperitymetrics", methods=["POST"])
+@app.route("/input_prosperitymetrics/<submission_id>", methods=["POST"])
 @jwt_required()
-def input_prosperitymetrics():
-
-    # Retrieve the submission_id from the session
-    submission_id = session.get('submission_id')
-    
-    # Check if submission_id exists in the session
-    if not submission_id:
-        return jsonify({
-            "success": False, 
-            "message": "No active submission session found. Start a new submission first."
-        }), 400
+def input_prosperitymetrics(submission_id):
+  
     data = request.get_json()
+    print(data)
     total_tax_paid = data.get("TotalTaxPaid")
     abs_number_of_new_emps = data.get("AbsNumberOfNewEmps")
     abs_number_of_new_emp_turnover = data.get("AbsNumberOfNewEmpTurnover")
@@ -373,20 +350,12 @@ def input_prosperitymetrics():
             "message": str(e)
         }), 500
 
-@app.route("/input_governancemetrics", methods=["POST"])
+@app.route("/input_governancemetrics/<submission_id>", methods=["POST"])
 @jwt_required()
-def input_governancemetrics():
+def input_governancemetrics(submission_id):
 
-    # Retrieve the submission_id from the session
-    submission_id = session.get('submission_id')
-    
-    # Check if submission_id exists in the session
-    if not submission_id:
-        return jsonify({
-            "success": False, 
-            "message": "No active submission session found. Start a new submission first."
-        }), 400
     data = request.get_json()
+    print(data)
     anti_corruption_training = data.get("AntiCorruptionTraining")
     confirmed_corruption_incident_prev = data.get("ConfirmedCorruptionIncidentPrev")
     confirmed_corruption_incident_current = data.get("ConfirmedCorruptionIncidentCurrent")
@@ -419,21 +388,13 @@ def input_governancemetrics():
             "success": False,
             "message": str(e)
         }), 500
-
-@app.route('/trans', methods=['GET'])
+@app.route("/trans/<submission_id>", methods=["POST"])
 @jwt_required()
-def trans():
-
-    submission_id = session.get('submission_id')
+def trans(submission_id):
+    print("in server")
 
     submission = Submission.query.get(submission_id)
     
-    if not submission_id:
-        return jsonify({
-            "success": False, 
-            "message": "No active submission session found. Start a new submission first."
-        }), 400
-
     # List of models to fetch data from
     models = [Peoplemetrics, Planetmetrics, Prosperitymetrics, Governancemetrics]
 
@@ -655,6 +616,8 @@ def generate_dummy_data():
                     LastName=fake.last_name(),
                     Date=fake.date_this_decade(),
                     Year=fake.year(),  # Generate a year
+                    StartPeriod=fake.date_this_decade(),
+                    EndPeriod=fake.date_this_decade(),
                     Score=random.uniform(0, 100),  # Generate a random score between 0 and 100
                     Status=random.choice([0, 1, 2]),  # Randomly choose a status
                     UserID=user.UserID

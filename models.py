@@ -25,8 +25,8 @@ class Submission(db.Model):
     FirstName = db.Column(db.String(100))
     LastName = db.Column(db.String(100))
     Date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
-    StartPeriod = db.Column(db.Date, nullable=False)
-    EndPeriod = db.Column(db.Date, nullable=False)
+    StartPeriod = db.Column(db.Date, nullable=True,default=datetime.utcnow )
+    EndPeriod = db.Column(db.Date, nullable=True,default=datetime.utcnow)
     Year = db.Column(db.Integer)
     Score = db.Column(db.Double)
     Status = db.Column(db.Integer) # 0: in progress, 1: complete, 2: rejected
