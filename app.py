@@ -621,11 +621,7 @@ def get_success_page(submission_id):
     if request.method == "GET":  
         user_id = get_jwt_identity()
         current_user = db.session.get(User, user_id)
-        submission_id = session.get('submission_id')
-
-        submission = Submission.query.get(submission_id)
-        submission.Status = 1
-        db.session.commit()
+        transaction = db.session.query(Transaction).filter(Transaction.SubmissionID == submission_id).first()
 
         return jsonify({
             "success": True,
