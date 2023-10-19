@@ -221,6 +221,8 @@ def input_submission(submission_id):
 def nullify_empty_string(string):
     if string == "":
         return None
+    else:
+        return string
 
 @app.route("/input_peoplemetrics/<submission_id>", methods=["POST"])
 @jwt_required()
