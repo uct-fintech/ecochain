@@ -4,7 +4,7 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import argparse
 from models import db, User, Transaction, Submission, Peoplemetrics, Planetmetrics, Prosperitymetrics, Governancemetrics
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.inspection import inspect
 from algosdk import account
 import json
@@ -585,6 +585,28 @@ def get_dashboard_data():
             "description" : current_user.Description,
             "submissions": serialized_subs
         }), 200
+    
+@app.route('/get_submission/<int:submission_id>')
+@jwt_required()    
+def get_submission(submission_id):
+    try:
+        submission = Submission.query.filter_by(SubmissionID=submission_id).one()
+        full_name = f"{submission.FirstName} {submission.LastName}"
+        current_user = db.session.query(User).get(submission.UserID)
+
+        return jsonify({
+            "success": True,
+            "company" : current_user.Name,
+            "full_name": full_name,
+            "start_period": submission.StartPeriod,
+            "end_period": submission.EndPeriod,
+        }), 200
+
+    except NoResultFound:
+        return jsonify({
+            "success": False,
+            "error": "Submission not found"
+        }), 404
     
 @app.route('/get_success_page')
 @jwt_required()    
