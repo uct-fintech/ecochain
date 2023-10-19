@@ -596,7 +596,7 @@ def get_success_page():
 
         submission = Submission.query.get(submission_id)
         submission.Status = 1
-        db.commit()
+        db.session.commit()
 
         return jsonify({
             "success": True,
